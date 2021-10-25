@@ -88,7 +88,7 @@ If you install this module into a local dir, you should put this in `nginx.conf`
 `resolver 8.8.8.8` is here to prevent DNS resolve problems into the Docker.
 
 Note: 
-ItS not necessary  to set either <LOCATION>` or `<SERVICE>. 
+It's not necessary  to set either `<LOCATION>` or `<SERVICE>. 
 `<LOCATION>` will be set automatically to  `auto` value  as this parameter exists to maintain compatibility with Amazon S3.
 `<SERVICE>`  will be set automatically to  `storage` because we will be access GCP resources.
 
