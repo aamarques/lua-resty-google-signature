@@ -68,7 +68,7 @@ http {
        location / {
             default_type  application/octet-stream;
             access_by_lua_block {
-                require("resty.aws-signature").gcs_set_headers(ngx.var.gcs_host, ngx.var.uri)
+                require("resty.google-signature").gcs_set_headers(ngx.var.gcs_host, ngx.var.uri)
             }
             proxy_pass https://$gcs_host;
         }
