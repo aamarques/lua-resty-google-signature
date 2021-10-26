@@ -2,7 +2,7 @@ local resty_hmac = require('resty.hmac')
 local resty_sha256 = require('resty.sha256')
 local str = require('resty.string')
 
-local _M = { _VERSION = '0.1.2' }
+local _M = { _VERSION = '0.1.0' }
 
 local function get_credentials ()
   local access_key = os.getenv('GCS_ACCESS_KEY')
