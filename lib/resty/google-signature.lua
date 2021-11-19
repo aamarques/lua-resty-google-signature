@@ -8,8 +8,6 @@ local function get_credentials ()
   local access_key = os.getenv('GCS_ACCESS_KEY')
   local secret_key = os.getenv('GCS_SECRET_KEY')
 
-  io.write(access_key)
-  io.write(secret_key)
   return {
     access_key = access_key,
     secret_key = secret_key
@@ -23,6 +21,12 @@ end
 local function get_iso8601_basic_short(timestamp)
   return os.date('!%Y%m%d', timestamp)
 end
+
+local function get_iso8601_basic_formated(timestamp)
+  timestamp = timestamp + 60
+  return os.date('!%Y-%m-%dT%H:%M:%SZ', timestamp)
+end
+
 
 local function get_derived_signing_key(keys, timestamp, region, service)
   local h_date = resty_hmac:new('GOOG4' .. keys['secret_key'], resty_hmac.ALGOS.SHA256)
@@ -73,12 +77,14 @@ local function get_hashed_canonical_request(timestamp, host, uri)
   return get_sha256_digest(canonical_request)
 end
 
-local function get_string_to_sign(timestamp, region, service, host, uri)
-  return 'GOOG4-HMAC-SHA256\n'
-    .. get_iso8601_basic(timestamp) .. '\n'
-    .. get_cred_scope(timestamp, region, service) .. '\n'
-    .. get_hashed_canonical_request(timestamp, host, uri)
+
+local function get_string_to_sign(timestamp, region, service, host, uri, keys)
+   return 'GOOG4-HMAC-SHA256\n'
+        .. get_iso8601_basic(timestamp) .. '\n'
+        .. get_cred_scope(timestamp, region, service) .. '\n'
+        .. get_hashed_canonical_request(timestamp, host, uri)
 end
+
 
 local function get_signature(derived_signing_key, string_to_sign)
   local h = resty_hmac:new(derived_signing_key, resty_hmac.ALGOS.SHA256)
@@ -88,14 +94,13 @@ end
 
 local function get_authorization(keys, timestamp, region, service, host, uri)
   local derived_signing_key = get_derived_signing_key(keys, timestamp, region, service)
-  local string_to_sign = get_string_to_sign(timestamp, region, service, host, uri)
+  local string_to_sign = get_string_to_sign(timestamp, region, service, host, uri, keys)
   local auth = 'GOOG4-HMAC-SHA256 '
-    .. 'Credential=' .. keys['access_key'] .. '/' .. get_cred_scope(timestamp, region, service)
-    .. ', SignedHeaders=' .. get_signed_headers()
-    .. ', Signature=' .. get_signature(derived_signing_key, string_to_sign)
+       .. 'Credential=' .. keys['access_key'] .. '/' .. get_cred_scope(timestamp, region, service)
+       .. ', SignedHeaders=' .. get_signed_headers()
+       .. ', Signature=' .. get_signature(derived_signing_key, string_to_sign)
   return auth
 end
-
 
 function _M.goog_set_headers(host, uri)
   local creds = get_credentials()
@@ -110,8 +115,14 @@ function _M.goog_set_headers(host, uri)
 end
 
 function _M.gcs_set_headers(host, uri)
-  _M.goog_set_headers(host, uri)
-  ngx.req.set_header('x-goog-content-sha256', get_sha256_digest(ngx.var.request_body))
+   if ngx.var.request_method == "POST" then
+      ngx.print("Invalid Method: ", ngx.var.request_method)
+      return _M
+   else
+      _M.goog_set_headers(host, uri)
+      ngx.req.set_header('x-goog-content-sha256', get_sha256_digest(ngx.var.request_body))
+  end
 end
+
 
 return _M
