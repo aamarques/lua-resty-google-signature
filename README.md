@@ -29,6 +29,7 @@ export GCS_SECRET_KEY=EXAMPLE_KEY
 To be accessible in your nginx configuration, these variables should be
 declared in `nginx.conf` file.
 
+I have opt to include the host and bucket name inside the `nginx.conf` but I will improve this in future (or you can do this).
 Example:
 
 ```nginx
@@ -64,6 +65,7 @@ http {
     server {
        listen 8080;
        set $gcs_host YOUR-BUCKET_NAME.storage.googleapis.com;
+       set $gcs_bucketname YOUR-BUCKET_NAME
 
        location / {
             default_type  application/octet-stream;
